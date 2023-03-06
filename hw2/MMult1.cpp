@@ -1,4 +1,4 @@
-// g++ -std=c++11 -O3 -march=native MMult1.cpp && ./a.out
+// g++ -O2 -std=c++11 -march=native MMult1.cpp && ./a.out
 
 #include <stdio.h>
 #include <math.h>
@@ -24,8 +24,60 @@ void MMult0(long m, long n, long k, double *a, double *b, double *c) {
   }
 }
 
+// A: m rows, k cols
+// B: k rows, n cols
 void MMult1(long m, long n, long k, double *a, double *b, double *c) {
-  // TODO: See instructions below
+  /**
+   * @brief one level blocking scheme
+   */
+  const int B = BLOCK_SIZE;
+  for (long jn = 0; jn < n; jn+=B) {
+    for (long pn = 0; pn < k; pn+=B) {
+      for (long in = 0; in < m; in+=B) {
+        for (long j = jn; j < std::min(n, jn+B); j++) {
+        for (long p = pn; p < std::min(n, pn+B); p++) {
+        for (long i = in; i < std::min(m, in+B); i++) {
+              double A_ip = a[i+p*m];
+              double B_pj = b[p+j*k];
+              double C_ij = c[i+j*m];
+              C_ij = C_ij + A_ip * B_pj;
+              c[i+j*m] = C_ij;
+        }
+        }
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief  optimized rearange the loops (this is same as MMult0 above)
+   */
+  // for (long j = 0; j < n; j++) {
+  //   for (long p = 0; p < k; p++) {
+  //     for (long i = 0; i < m; i++) {
+  //       double A_ip = a[i+p*m];
+  //       double B_pj = b[p+j*k];
+  //       double C_ij = c[i+j*m];
+  //       C_ij = C_ij + A_ip * B_pj;
+  //       c[i+j*m] = C_ij;
+  //     }
+  //   }
+  // }
+
+  /**
+   * @brief no change from last time MMult0
+   */
+  // for (long i = 0; i < m; i++) {
+  //   for (long j = 0; j < n; j++) {
+  //     for (long p = 0; p < k; p++) {
+  //       double A_ip = a[i+p*m];
+  //       double B_pj = b[p+j*k];
+  //       double C_ij = c[i+j*m];
+  //       C_ij = C_ij + A_ip * B_pj;
+  //       c[i+j*m] = C_ij;
+  //     }
+  //   }
+  // }
 }
 
 int main(int argc, char** argv) {
@@ -47,7 +99,7 @@ int main(int argc, char** argv) {
     for (long i = 0; i < k*n; i++) b[i] = drand48();
     for (long i = 0; i < m*n; i++) c_ref[i] = 0;
     for (long i = 0; i < m*n; i++) c[i] = 0;
-
+  
     for (long rep = 0; rep < NREPEATS; rep++) { // Compute reference solution
       MMult0(m, n, k, a, b, c_ref);
     }
@@ -58,8 +110,26 @@ int main(int argc, char** argv) {
       MMult1(m, n, k, a, b, c);
     }
     double time = t.toc();
-    double flops = 0; // TODO: calculate from m, n, k, NREPEATS, time
-    double bandwidth = 0; // TODO: calculate from m, n, k, NREPEATS, time
+    // flop counts stays the same
+    double flops = (2 * n * m * k) * NREPEATS * 1e-9 / time; // TODO: calculate from m, n, k, NREPEATS, time
+    
+    /**
+     * @brief for blocked MMult, 
+     * (m/b)(n/b)(k/b) block reads of A,B; 
+     * 2(m/b)(n/b) reads+writes of C;
+     * total read/write = [(m/b)(n/b)(k/b) + 2(m/b)(n/b)] b^2
+     * = mnk/b + 2nm
+     */
+    double bandwidth = (2*n*m + m*n*k/BLOCK_SIZE) * NREPEATS * sizeof(double) * 1e-9 / time; 
+    /**
+     * @brief for non-blocked MMult, 
+     * m*k entry reads of A, 
+     * each entry read of A means n entry reads in B, 
+     * so k*m*n reads of B
+     * 2*n*m reads+writes of C
+     */
+    // double bandwidth = (2*n*m + k*m + k*m*n) * NREPEATS * sizeof(double) * 1e-9 / time; 
+
     printf("%10ld %10f %10f %10f", p, time, flops, bandwidth);
 
     double max_err = 0;
