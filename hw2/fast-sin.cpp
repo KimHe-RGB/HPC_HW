@@ -55,10 +55,21 @@ void sin4_intrin(double* sinx, const double* x) {
   x1  = _mm256_load_pd(x);
   x2  = _mm256_mul_pd(x1, x1);
   x3  = _mm256_mul_pd(x1, x2);
+  
+  __m256d x5, x7, x9, x11;
+  x5  = _mm256_mul_pd(x3, x2);
+  x7  = _mm256_mul_pd(x5, x2);
+  x9  = _mm256_mul_pd(x7, x2);
+  x11 = _mm256_mul_pd(x9, x2);
 
   __m256d s = x1;
   s = _mm256_add_pd(s, _mm256_mul_pd(x3 , _mm256_set1_pd(c3 )));
+  s = _mm256_add_pd(s, _mm256_mul_pd(x5 , _mm256_set1_pd(c5 )));
+  s = _mm256_add_pd(s, _mm256_mul_pd(x7 , _mm256_set1_pd(c7 )));
+  s = _mm256_add_pd(s, _mm256_mul_pd(x9 , _mm256_set1_pd(c9 )));
+  s = _mm256_add_pd(s, _mm256_mul_pd(x11 , _mm256_set1_pd(c11 )));
   _mm256_store_pd(sinx, s);
+  
 #elif defined(__SSE2__)
   constexpr int sse_length = 2;
   for (int i = 0; i < 4; i+=sse_length) {
@@ -73,15 +84,12 @@ void sin4_intrin(double* sinx, const double* x) {
     x9  = _mm_mul_pd(x7, x2);
     x11 = _mm_mul_pd(x9, x2);
 
-    __m128 s = x1;
-    s = _mm_add_pd(s, _mm_mul_pd(x3 , _mm_set1_pd(c3 )));
+    __m128d s;
+    s = _mm_add_pd(x1, _mm_mul_pd(x3 , _mm_set1_pd(c3 )));
     s = _mm_add_pd(s, _mm_mul_pd(x5 , _mm_set1_pd(c5 )));
     s = _mm_add_pd(s, _mm_mul_pd(x7 , _mm_set1_pd(c7 )));
     s = _mm_add_pd(s, _mm_mul_pd(x9 , _mm_set1_pd(c9 )));
     s = _mm_add_pd(s, _mm_mul_pd(x11 , _mm_set1_pd(c11 )));
-
-    // __m128 s = x1;
-    // s = _mm_add_pd(s, _mm_mul_pd(x3 , _mm_set1_pd(c3 )));
     _mm_store_pd(sinx+i, s);
   }
 #else
