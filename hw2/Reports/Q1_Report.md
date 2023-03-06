@@ -77,6 +77,16 @@ At Line 81, `x[i] = x[i-1] + x[i-2];` will read/write to out-of-bound index when
 
 At Line 86, `delete [] x` is a mismatched delete. Instead we should `free(x);`
 
+### Fix
+
+We change the for loop to be:
+
+```cpp
+for ( i = 2; i < n; i++ )
+```
+
+We also replace `delete [] x` by `free(x)`;
+
 ## val_test02
 
 Compling with:
@@ -166,6 +176,10 @@ TEST02
 
 ### Issue Analysis
 
-At Line 81, `x[i] = x[i-1] + x[i-2];` will read/write to out-of-bound index when `n=10`. So we need to change the for loop index range
+At Line 104, the code is trying to print out some unintialized data from the array
 
-At Line 86, `delete [] x` is a mismatched delete. Instead we should `free(x);`
+valgrind does not complain when the code is assigning uninitialized values around, but it complains when the code try to access and print out the uninitialized value for the first time
+
+### Fix
+
+We can fix the code by initializing all the values in the array correctly.
