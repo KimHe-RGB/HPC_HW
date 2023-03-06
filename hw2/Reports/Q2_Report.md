@@ -185,4 +185,4 @@ According to Intel product page, the peak FLOP-rate of my CPU (i9-9880H CPU @ 2.
 
 The one level blocking scheme code achieved 13 Gflops/s for dimension = 1984, when the grid_size = 64.
 
-So we achieved only about 4.4% of the peak FLOP-rate.
+So we achieved only about `4.4%` of the peak FLOP-rate.
