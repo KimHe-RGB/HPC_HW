@@ -78,14 +78,14 @@ void myFunction() {
     {
         // #pragma omp for schedule(static)            // (a)
         // #pragma omp for schedule(static,1)          // (b)
-        #pragma omp for schedule(dynamic, 1)        // (c)
-        // #pragma omp for schedule(dynamic, 1) nowait    // (d)
+        // #pragma omp for schedule(dynamic, 1)        // (c)
+        #pragma omp for schedule(dynamic, 1) nowait    // (d)
         for (int i = 1; i < n; i++)
             sleepUniform(i);
         // #pragma omp for schedule(static)            // (a)
         // #pragma omp for schedule(static,1)          // (b)
-        #pragma omp for schedule(dynamic, 1)      // (c)
-        // #pragma omp for schedule(dynamic, 1) nowait    // (d)
+        // #pragma omp for schedule(dynamic, 1)      // (c)
+        #pragma omp for schedule(dynamic, 1) nowait    // (d)
         for (int i = 1; i < n; i++)
             sleepUniform(n-i);
     }
@@ -103,7 +103,7 @@ int main() {
   auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
   // Print the elapsed time in milliseconds
-  printf("Elapsed time: %d milliseconds", elapsed_time.count());
+  printf("Elapsed time: %ld milliseconds\n", elapsed_time.count());
   
   return 0;
 }
