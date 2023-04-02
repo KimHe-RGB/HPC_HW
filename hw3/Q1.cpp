@@ -42,23 +42,35 @@ The total runtime of "#pragma omp for schedule(dynamic, 1) nowait" is about 580m
 
 
 #if defined(_OPENMP)
-#include <omp.h>
+    #include <omp.h>
 #else
-typedef int omp_int_t;
-inline omp_int_t omp_get_thread_num() { return 0;}
-inline omp_int_t omp_get_num_threads() { return 1;}
+    typedef int omp_int_t;
+    inline omp_int_t omp_get_thread_num() { return 0;}
+    inline omp_int_t omp_get_num_threads() { return 1;}
 #endif
 
 #include <algorithm>
 #include <stdio.h>
 #include <math.h>
-#include <chrono>
 
 #ifdef _WIN32
-#include <Windows.h>
+    #include <windows.h>
 #else
-#include <unistd.h>
+    #include <unistd.h>
 #endif
+
+#include <chrono>
+
+void sleepUniform(int milliseconds);
+
+void sleepUniform(int milliseconds)
+{
+    #ifdef _WIN32
+        Sleep(milliseconds);
+    #else
+        usleep(milliseconds * 1000);
+    #endif
+}
 
 void myFunction() {
     int n = 100;
@@ -66,16 +78,16 @@ void myFunction() {
     {
         // #pragma omp for schedule(static)            // (a)
         // #pragma omp for schedule(static,1)          // (b)
-        // #pragma omp for schedule(dynamic, 1)        // (c)
-        #pragma omp for schedule(dynamic, 1) nowait    // (d)
+        #pragma omp for schedule(dynamic, 1)        // (c)
+        // #pragma omp for schedule(dynamic, 1) nowait    // (d)
         for (int i = 1; i < n; i++)
-            Sleep(i);
+            sleepUniform(i);
         // #pragma omp for schedule(static)            // (a)
         // #pragma omp for schedule(static,1)          // (b)
-        // #pragma omp for schedule(dynamic, 1)      // (c)
-        #pragma omp for schedule(dynamic, 1) nowait    // (d)
+        #pragma omp for schedule(dynamic, 1)      // (c)
+        // #pragma omp for schedule(dynamic, 1) nowait    // (d)
         for (int i = 1; i < n; i++)
-            Sleep(n-i);
+            sleepUniform(n-i);
     }
 }
 
