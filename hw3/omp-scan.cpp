@@ -44,7 +44,7 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
     printf("hello world from thread %d, size %ld, [%ld - %ld]\n", t, size, first_index, last_index);
 
     // the scan has to be sequential
-    #pragma opm for schedule(static)
+    // #pragma omp for schedule(static)
     for (long j = first_index+1; j < last_index+1; j++)
     {
       prefix_sum[j] = prefix_sum[j-1] + A[j-1];
@@ -61,7 +61,7 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
     // The update, where
     // the partial sums are all corrected by the correction should then be done in parallel again.
     // the first entry of each thread need access to the last entry of previous thread
-    #pragma opm for schedule(static)
+    // #pragma omp for schedule(static)
     for (long j = first_index; j < last_index+1; j++)
     {
       long offset = 0;
@@ -80,9 +80,12 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
 
 int main() {
   long N = 10000;
-  long* A = (long*) malloc(N * sizeof(long));
-  long* B0 = (long*) malloc(N * sizeof(long));
-  long* B1 = (long*) malloc(N * sizeof(long));
+  // long* A = (long*) malloc(N * sizeof(long));
+  // long* B0 = (long*) malloc(N * sizeof(long));
+  // long* B1 = (long*) malloc(N * sizeof(long));
+  long* A = new long[N];
+  long* B0 = new long[N];
+  long* B1 = new long[N];
   for (long i = 0; i < N; i++) A[i] = rand();
   for (long i = 0; i < N; i++) B1[i] = 0;
   
@@ -95,21 +98,25 @@ int main() {
   printf("parallel-scan   = %fs\n", omp_get_wtime() - tt);
 
   printf("first hi there %ld %ld\n", B0[0], B1[0]);
-  printf("second hi there %ld %ld\n", B0[1], B1[1]);
-  printf("fourth hi there %ld %ld\n", B0[3], B1[3]);
-  printf("fifth hi there %ld %ld\n", B0[4], B1[4]);
-  printf("sixth hi there %ld %ld\n", B0[5], B1[5]);
-  printf("seventh hi there %ld %ld\n", B0[6], B1[6]);
-  printf("tenth hi there %ld %ld\n", B0[9], B1[9]);
-  printf("eleventh hi there %ld %ld\n", B0[10], B1[10]);
   printf("last hi there %ld %ld\n", B0[N-1], B1[N-1]);
 
   long err = 0;
   for (long i = 0; i < N; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
   printf("error = %ld\n", err);
 
-  free(A);
-  free(B0);
-  free(B1);
+  // free(A);
+  // free(B0);
+  // free(B1);
+  delete[] A;
+  delete[] B0;
+  delete[] B1;
   return 0;
 }
+
+  // printf("second hi there %ld %ld\n", B0[1], B1[1]);
+  // printf("fourth hi there %ld %ld\n", B0[3], B1[3]);
+  // printf("fifth hi there %ld %ld\n", B0[4], B1[4]);
+  // printf("sixth hi there %ld %ld\n", B0[5], B1[5]);
+  // printf("seventh hi there %ld %ld\n", B0[6], B1[6]);
+  // printf("tenth hi there %ld %ld\n", B0[9], B1[9]);
+  // printf("eleventh hi there %ld %ld\n", B0[10], B1[10]);
