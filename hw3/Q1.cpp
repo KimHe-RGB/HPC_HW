@@ -41,10 +41,24 @@ The total runtime of "#pragma omp for schedule(dynamic, 1) nowait" is about 580m
 */
 
 
-#include <iostream>
+#if defined(_OPENMP)
+#include <omp.h>
+#else
+typedef int omp_int_t;
+inline omp_int_t omp_get_thread_num() { return 0;}
+inline omp_int_t omp_get_num_threads() { return 1;}
+#endif
+
+#include <algorithm>
+#include <stdio.h>
+#include <math.h>
 #include <chrono>
 
-#include <windows.h>
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
 
 void myFunction() {
     int n = 100;
@@ -77,7 +91,7 @@ int main() {
   auto elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 
   // Print the elapsed time in milliseconds
-  std::cout << "Elapsed time: " << elapsed_time.count() << " milliseconds" << std::endl;
-
+  printf("Elapsed time: %d milliseconds", elapsed_time.count());
+  
   return 0;
 }
