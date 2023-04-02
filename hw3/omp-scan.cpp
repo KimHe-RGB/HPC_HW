@@ -30,7 +30,7 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
   // in parallel
   if (n == 0) return;
   // init the shared offset vector s
-  long s[p];
+  long* s = (long*) malloc(p * sizeof(long));
   // parallel
   #pragma omp parallel shared(s)
   {
@@ -41,10 +41,10 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
     long first_index = (long) t * size;
     long last_index  = first_index + size - 1;
 
-    printf("hello world from thread %d, size %ld, [%ld - %ld]\n", t, size, first_index, last_index);
+    // printf("hello world from thread %d, size %ld, [%ld - %ld]\n", t, size, first_index, last_index);
 
     // the scan has to be sequential
-    // #pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (long j = first_index+1; j < last_index+1; j++)
     {
       prefix_sum[j] = prefix_sum[j-1] + A[j-1];
@@ -54,14 +54,10 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
     s[t] = prefix_sum[last_index] + A[last_index]; // store the offset of thread t that should be added to thread t+1
     #pragma omp barrier // make sure all s[t] have been computed here
 
-
-    printf("hello world 2 from thread %d, s[t] = %ld = %ld + %ld \n", t, s[t], prefix_sum[last_index], A[last_index]);
-    #pragma omp barrier
-
     // The update, where
     // the partial sums are all corrected by the correction should then be done in parallel again.
     // the first entry of each thread need access to the last entry of previous thread
-    // #pragma omp for schedule(static)
+    #pragma omp for schedule(static)
     for (long j = first_index; j < last_index+1; j++)
     {
       long offset = 0;
@@ -69,23 +65,16 @@ void scan_omp(long* prefix_sum, const long* A, long n) {
 
       if(t > 0) prefix_sum[j] = prefix_sum[j] + offset; 
     }
-
-    #pragma omp barrier
-    printf("hello world 3 from thread %d:  [%ld = %ld]\n", t, prefix_sum[first_index], prefix_sum[last_index]);
-
   }
   
   return;
 }
 
 int main() {
-  long N = 10000;
-  // long* A = (long*) malloc(N * sizeof(long));
-  // long* B0 = (long*) malloc(N * sizeof(long));
-  // long* B1 = (long*) malloc(N * sizeof(long));
-  long* A = new long[N];
-  long* B0 = new long[N];
-  long* B1 = new long[N];
+  long N = 100000000;
+  long* A = (long*) malloc(N * sizeof(long));
+  long* B0 = (long*) malloc(N * sizeof(long));
+  long* B1 = (long*) malloc(N * sizeof(long));
   for (long i = 0; i < N; i++) A[i] = rand();
   for (long i = 0; i < N; i++) B1[i] = 0;
   
@@ -104,19 +93,8 @@ int main() {
   for (long i = 0; i < N; i++) err = std::max(err, std::abs(B0[i] - B1[i]));
   printf("error = %ld\n", err);
 
-  // free(A);
-  // free(B0);
-  // free(B1);
-  delete[] A;
-  delete[] B0;
-  delete[] B1;
+  free(A);
+  free(B0);
+  free(B1);
   return 0;
 }
-
-  // printf("second hi there %ld %ld\n", B0[1], B1[1]);
-  // printf("fourth hi there %ld %ld\n", B0[3], B1[3]);
-  // printf("fifth hi there %ld %ld\n", B0[4], B1[4]);
-  // printf("sixth hi there %ld %ld\n", B0[5], B1[5]);
-  // printf("seventh hi there %ld %ld\n", B0[6], B1[6]);
-  // printf("tenth hi there %ld %ld\n", B0[9], B1[9]);
-  // printf("eleventh hi there %ld %ld\n", B0[10], B1[10]);
