@@ -24,7 +24,7 @@ Written reports for all three questions are combined in:
 
 <https://github.com/KimHe-RGB/HPC_HW.git/hw3/Report.md>
 
-## ======================Below are Previous Homeworks==========================
+## ===Previous Homeworks Below===
 
 ## HPC-HW2
 
