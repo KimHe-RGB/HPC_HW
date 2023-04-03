@@ -22,7 +22,7 @@ make
 
 Written reports for all three questions are combined in:
 
-<https://github.com/KimHe-RGB/HPC_HW.git/hw3/Report.md>
+<https://github.com/KimHe-RGB/HPC_HW/blob/main/hw3/Report.md>
 
 ## ===Previous Homeworks Below===
 
@@ -42,13 +42,13 @@ make
 Written reports for each question is under:
 
 Q1:
-    <https://github.com/KimHe-RGB/HPC_HW.git/hw2/Reports/Q1_Report.md>
+    <https://github.com/KimHe-RGB/HPC_HW/blob/main/hw2/Reports/Q1_Report.md>
 
 Q2:
-    <https://github.com/KimHe-RGB/HPC_HW.git/hw2/Reports/Q2_Report.md>
+    <https://github.com/KimHe-RGB/HPC_HW/blob/main/hw2/Reports/Q2_Report.md>
 
 Q3:
-    <https://github.com/KimHe-RGB/HPC_HW.git/hw2/Reports/Q3_Report.md>
+    <https://github.com/KimHe-RGB/HPC_HW/blob/main/hw2/Reports/Q3_Report.md>
 
 Q4:
-    <https://github.com/KimHe-RGB/HPC_HW.git/hw2/Reports/Q4_Report.md>
+    <https://github.com/KimHe-RGB/HPC_HW/blob/main/hw2/Reports/Q4_Report.md>
