@@ -76,16 +76,16 @@ void myFunction() {
     int n = 100;
     #pragma omp parallel
     {
-        // #pragma omp for schedule(static)            // (a)
-        // #pragma omp for schedule(static,1)          // (b)
-        // #pragma omp for schedule(dynamic, 1)        // (c)
-        #pragma omp for schedule(dynamic, 1) nowait    // (d)
+        // #pragma omp for schedule(static)             // (a)
+        // #pragma omp for schedule(static,1)           // (b)
+        // #pragma omp for schedule(dynamic, 1)         // (c)
+        #pragma omp for schedule(dynamic, 1) nowait     // (d)
         for (int i = 1; i < n; i++)
             sleepUniform(i);
-        // #pragma omp for schedule(static)            // (a)
-        // #pragma omp for schedule(static,1)          // (b)
-        // #pragma omp for schedule(dynamic, 1)      // (c)
-        #pragma omp for schedule(dynamic, 1) nowait    // (d)
+        // #pragma omp for schedule(static)             // (a)
+        // #pragma omp for schedule(static,1)           // (b)
+        // #pragma omp for schedule(dynamic, 1)         // (c)
+        #pragma omp for schedule(dynamic, 1) nowait     // (d)
         for (int i = 1; i < n; i++)
             sleepUniform(n-i);
     }
