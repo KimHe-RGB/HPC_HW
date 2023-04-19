@@ -1,0 +1,17 @@
+Using NYU network or VPN
+
+Step1 
+rPLUH^jX
+
+
+ssh xh1131@greene.hpc.nyu.edu
+
+
+If not using the NYU network or VPN
+
+Step1: ssh to the remote host:
+
+ssh xh1131@gw.hpc.nyu.edu
+
+Step2: password:
+password = NetID password = Pass@2023
