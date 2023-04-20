@@ -1,14 +1,66 @@
-Using NYU network or VPN
+======================================================================
+If not using the NYU network or VPN:
+======================================================================
 
-Step1 
+-------------------------------------------------------------------------------------------
+Step1: connect to cims access account so that we have access to all remote resources
+-------------------------------------------------------------------------------------------
+
+ssh xh1131@access.cims.nyu.edu
+
 rPLUH^jX
 
 
+( Using NYU network or VPN, we might be able to skip step 1 ?)
+
+-------------------------------------------------------------------------------------------
+Step2: connect to NYU Greene
+-------------------------------------------------------------------------------------------
+
 ssh xh1131@greene.hpc.nyu.edu
 
+-------------------------------------------------------------------------------------------
+Step2-0: prepare the code
+-------------------------------------------------------------------------------------------
 
-If not using the NYU network or VPN
+git clone
+git pull
 
+Some files required:
+
+Makefile to compile C/C++
+
+-------------------------------------------------------------------------------------------
+Step2-1: load required modules 
+-------------------------------------------------------------------------------------------
+
+module load mpi
+
+-------------------------------------------------------------------------------------------
+Step2-2: run the code
+-------------------------------------------------------------------------------------------
+
+Submit the batch script to run our code
+
+	sbatch <job-script>
+
+Cancel the submitted job:
+
+	scancel <job-id>
+
+See all jobs:
+
+	squeue | less
+
+
+srun .sbatch
+
+
+
+
+======================================================================
+This following procedures does not work on public Network
+======================================================================
 Step1: ssh to the remote host:
 
 ssh xh1131@gw.hpc.nyu.edu
