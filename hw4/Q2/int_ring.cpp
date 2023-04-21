@@ -46,8 +46,8 @@ double ints_ring(int start, int end, long Nrepeat, long Nsize, MPI_Comm comm) {
   int rank;
   MPI_Comm_rank(comm, &rank);
 
-  int* msg_ints = (int*) malloc(Nsize);
-  for (unsigned i = 0; i < Nsize; i++) msg_ints[i] = 0;
+  int msg_ints[Nsize];
+  for (long i = 0; i < Nsize; i++) msg_ints[i] = 0;
   
   MPI_Barrier(comm); // make sure everyone is ready to send
   double tt = MPI_Wtime();
@@ -61,12 +61,12 @@ double ints_ring(int start, int end, long Nrepeat, long Nsize, MPI_Comm comm) {
     }
     else if (rank == end) {
         MPI_Recv(&msg_ints, Nsize, MPI_INT, rank-1, repeat, comm, &status);
-        for (unsigned i = 0; i < Nsize; i++) msg_ints[i] += rank;
+        for (long i = 0; i < Nsize; i++) msg_ints[i] += rank;
         MPI_Send(&msg_ints, Nsize, MPI_INT, start, repeat, comm);
     } 
     else {
         MPI_Recv(&msg_ints, Nsize, MPI_INT, rank-1, repeat, comm, &status);
-        for (unsigned i = 0; i < Nsize; i++) msg_ints[i] += rank;
+        for (long i = 0; i < Nsize; i++) msg_ints[i] += rank;
         MPI_Send(&msg_ints, Nsize, MPI_INT, rank+1, repeat, comm);
     }
   }
