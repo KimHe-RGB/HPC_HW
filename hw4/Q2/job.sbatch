@@ -14,4 +14,4 @@ module load intel/19.1.2 openmpi/intel/4.0.5
 
 make
 
-mpiexec ./int_ring 0 2
+mpiexec ./int_ring 0 3

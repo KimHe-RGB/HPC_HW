@@ -45,12 +45,14 @@ double int_ring(int start, int end, long Nrepeat, MPI_Comm comm) {
 double ints_ring(int start, int end, long Nrepeat, long Nsize, MPI_Comm comm) {
   int rank;
   MPI_Comm_rank(comm, &rank);
-  double tt = MPI_Wtime();
 
+  int* msg_ints = (int*) malloc(Nsize);
+  for (unsigned i = 0; i < Nsize; i++) msg_ints[i] = 0;
+  
+  MPI_Barrier(comm); // make sure everyone is ready to send
+  double tt = MPI_Wtime();
   for (long repeat = 0; repeat < Nrepeat; repeat++) {
     MPI_Status status;
-    int* msg_ints = (int*) malloc(Nsize);
-    for (unsigned i = 0; i < Nsize; i++) msg_ints[i] = 0;
     
     if (rank == start) {
         MPI_Send(&msg_ints, Nsize, MPI_INT, rank+1, repeat, comm);
