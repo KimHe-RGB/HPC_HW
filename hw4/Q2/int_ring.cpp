@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <cstdlib>
-#inc``lude <mpi.h>
+#include <mpi.h>
 #include <iostream>
 
 /**
