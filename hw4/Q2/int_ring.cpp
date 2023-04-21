@@ -23,7 +23,7 @@ double int_ring(int start, int end, long Nrepeat, MPI_Comm comm) {
         msg_int = rank;
         MPI_Send(&msg_int, 1, MPI_INT, rank+1, repeat, comm);
         MPI_Recv(&msg_int, 1, MPI_INT, end, repeat, comm, &status);
-        printf("The Result received by proc %d is %d\n", rank, msg_int);
+        if (repeat == 0) printf("The Result received by proc %d is %d\n", rank, msg_int);
     }
     else if (rank == end) {
         MPI_Recv(&msg_int, 1, MPI_INT, rank-1, repeat, comm, &status);
@@ -55,7 +55,7 @@ double ints_ring(int start, int end, long Nrepeat, long Nsize, MPI_Comm comm) {
     if (rank == start) {
         MPI_Send(&msg_ints, Nsize, MPI_INT, rank+1, repeat, comm);
         MPI_Recv(&msg_ints, Nsize, MPI_INT, end, repeat, comm, &status);
-        printf("The Result index 0 and 1 received by proc %d is %d and %d\n", rank, msg_ints[0], msg_ints[1]);
+        if (repeat == 0) printf("The Result received by proc %d is %d\n", rank, msg_int);
     }
     else if (rank == end) {
         MPI_Recv(&msg_ints, Nsize, MPI_INT, rank-1, repeat, comm, &status);
