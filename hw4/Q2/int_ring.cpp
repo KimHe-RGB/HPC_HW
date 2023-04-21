@@ -21,19 +21,19 @@ double int_ring(int start, int end, long Nrepeat, MPI_Comm comm) {
     int msg_int = 0; 
     if (rank == start) {
         msg_int = rank;
-        MPI_ISend(&msg_int, 1, MPI_INT, rank+1, repeat, comm);
+        MPI_Send(&msg_int, 1, MPI_INT, rank+1, repeat, comm);
         MPI_Recv(&msg_int, 1, MPI_INT, end, repeat, comm, &status);
         printf("The Result received by proc %d is %d\n", rank, msg_int);
     }
     else if (rank == end) {
         MPI_Recv(&msg_int, 1, MPI_INT, rank-1, repeat, comm, &status);
         msg_int += rank;
-        MPI_ISend(&msg_int, 1, MPI_INT, start, repeat, comm);
+        MPI_Isend(&msg_int, 1, MPI_INT, start, repeat, comm);
     } 
     else {
         MPI_Recv(&msg_int, 1, MPI_INT, rank-1, repeat, comm, &status);
         msg_int += rank;
-        MPI_ISend(&msg_int, 1, MPI_INT, rank+1, repeat, comm);
+        MPI_Isend(&msg_int, 1, MPI_INT, rank+1, repeat, comm);
     }
   }
   tt = MPI_Wtime() - tt;
