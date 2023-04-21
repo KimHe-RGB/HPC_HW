@@ -10,6 +10,6 @@
 #SBATCH --mail-user=xh1131@nyu.edu
 
 module purge 
-module load  amber/openmpi/intel/20.06 
+module load intel/19.1.2 openmpi/intel/4.0.5 
 
-mpiexec ./pingpong
+mpiexec ./pingpong 0 1
