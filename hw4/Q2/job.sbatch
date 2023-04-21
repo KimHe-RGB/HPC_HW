@@ -12,4 +12,4 @@
 module purge 
 module load intel/19.1.2 openmpi/intel/4.0.5 
 
-mpiexec ./pingpong 1 2
+mpiexec ./int_ring 0 2
