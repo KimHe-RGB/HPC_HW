@@ -41,6 +41,37 @@ double int_ring(int start, int end, long Nrepeat, MPI_Comm comm) {
   return tt;
 }
 
+//communicate a large array of about 2MByte
+double ints_ring(int start, int end, long Nrepeat, long Nsize, MPI_Comm comm) {
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+  double tt = MPI_Wtime();
+
+  for (long repeat = 0; repeat < Nrepeat; repeat++) {
+    MPI_Status status;
+    int* msg_ints = (int*) malloc(Nsize);
+    for (unsigned i = 0; i < Nsize; i++) msg_ints[i] = 0;
+    
+    if (rank == start) {
+        MPI_Send(&msg_ints, Nsize, MPI_INT, rank+1, repeat, comm);
+        MPI_Recv(&msg_ints, Nsize, MPI_INT, end, repeat, comm, &status);
+        printf("The Result index 0 and 1 received by proc %d is %d and %d\n", rank, msg_ints[0], msg_ints[1]);
+    }
+    else if (rank == end) {
+        MPI_Recv(&msg_ints, Nsize, MPI_INT, rank-1, repeat, comm, &status);
+        for (unsigned i = 0; i < Nsize; i++) msg_ints[i] += rank;
+        MPI_Send(&msg_ints, Nsize, MPI_INT, start, repeat, comm);
+    } 
+    else {
+        MPI_Recv(&msg_ints, Nsize, MPI_INT, rank-1, repeat, comm, &status);
+        for (unsigned i = 0; i < Nsize; i++) msg_ints[i] += rank;
+        MPI_Send(&msg_ints, Nsize, MPI_INT, rank+1, repeat, comm);
+    }
+  }
+  tt = MPI_Wtime() - tt;
+
+  return tt;
+}
 
 int main(int argc, char** argv) {
   MPI_Init(&argc, &argv);
@@ -59,6 +90,11 @@ int main(int argc, char** argv) {
   long Nrepeat = 1000;
   double tt = int_ring(start, end, Nrepeat, comm);
   if (!rank) printf("int ring latency: %e ms\n", tt/Nrepeat * 1000);
+
+  long Nrepeat = 1000;
+  long Nsize = 524288;
+  double tt = ints_ring(start, end, Nrepeat, Nsize, comm); // 2MB
+  if (!rank) printf("pingpong bandwidth: %e GB/s\n", (Nsize*Nrepeat)/tt/1e9);
 
   MPI_Finalize();
 }
