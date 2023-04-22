@@ -7,9 +7,6 @@
  */
 #include <stdio.h>
 #include <math.h>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 #include <mpi.h>
 #include <string.h>
 
@@ -17,17 +14,20 @@
 double compute_residual(double **lu, int sqrt_lN, double invhsq) {
   int i, j;
   double tmp, gres = 0.0, lres = 0.0;
+  printf("computing \n");
 
-#pragma omp parallel for default(none) shared(lu,sqrt_lN,invhsq) private(i,j,tmp) reduction(+:lres)
   for (i = 1; i <= sqrt_lN; i++){
-    for (j = 1; j < sqrt_lN; j++)
+    for (j = 1; j <= sqrt_lN; j++)
     {
       tmp = ((4.0*lu[i][j] - lu[i-1][j] - lu[i+1][j] - lu[i][j-1] - lu[i][j+1]) * invhsq - 1);
       lres += tmp * tmp;
     }
+      printf("computing %d\n", lres);
   }
   /* use allreduce for convenience; a reduce would also be sufficient */
   MPI_Allreduce(&lres, &gres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  printf("fin computing gres=%.2f; lres=%.2f\n", gres, lres);
   return sqrt(gres);
 }
 
@@ -77,17 +77,6 @@ int main(int argc, char * argv[]) {
 
   sscanf(argv[1], "%d", &N);                                             // N: discretization number of each dimension
   sscanf(argv[2], "%d", &max_iters);                                     // max_iters: number of jacobian iterations that we want to perform
-  # pragma omp parallel
-  {
-  #ifdef _OPENMP
-    int my_threadnum = omp_get_thread_num();
-    int numthreads = omp_get_num_threads();
-  #else
-    int my_threadnum = 0;
-    int numthreads = 1;
-  #endif
-    printf("Hello, I'm thread %d out of %d on mpirank %d\n", my_threadnum, numthreads, mpirank);
-  }
 
   if (!isPowerOfFour(p) || !isPowerOfFour(N*N)) {
     printf("Exiting. Both p and NxN must be power of 4\n");
@@ -101,7 +90,9 @@ int main(int argc, char * argv[]) {
   lN = N * N / p;
   int sqrt_p = sqrt(p);   // number of processes per edge
   int sqrt_lN = sqrt(lN);
-  if (mpirank == 0) printf("NxN: %d, local grid: %d x %d = %d\n", N, sqrt_lN, sqrt_lN, lN);
+  if (mpirank == 0) 
+  printf("NxN: %d x %d = %d, p = %d,\nlocal grid: %d x %d = %d\n", 
+  N,N,N*N, p, sqrt_lN,sqrt_lN,lN);
 
   /* timing */
   MPI_Barrier(MPI_COMM_WORLD);
@@ -123,12 +114,14 @@ int main(int argc, char * argv[]) {
   double gres, gres0, tol = 1e-5;
 
   /* initial residual */
+  printf("0 %d\n", mpirank);
   gres0 = compute_residual(lu, sqrt_lN, invhsq);
   gres = gres0;
+  printf("2 - %.2f\n", gres0);
 
+  printf("1 \n");
   for (iter = 0; iter < max_iters && gres/gres0 > tol; iter++) {
-
-  #pragma omp parallel for default(none) private(i,j) shared(lN,sqrt_lN,lunew,lu,hsq)
+    printf("iter at %d, mod 10 = %d\n", iter, iter%10);
     /* Jacobi step for local points */
     for (i = 1; i <= sqrt_lN; i++){
       for (j = 1; j <= sqrt_lN; j++){
@@ -195,6 +188,7 @@ int main(int argc, char * argv[]) {
       }
     }
   }
+  printf("end! \n");
 
   /* Clean up */
   free(lu);
