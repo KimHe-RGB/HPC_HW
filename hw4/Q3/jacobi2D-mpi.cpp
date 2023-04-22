@@ -22,7 +22,7 @@ double compute_residual(double **lu, int sqrt_lN, double invhsq) {
       tmp = ((4.0*lu[i][j] - lu[i-1][j] - lu[i+1][j] - lu[i][j-1] - lu[i][j+1]) * invhsq - 1);
       lres += tmp * tmp;
     }
-      printf("computing %d\n", lres);
+    printf("computing %d iter - %d\n", i, lres);
   }
   /* use allreduce for convenience; a reduce would also be sufficient */
   MPI_Allreduce(&lres, &gres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -107,6 +107,18 @@ int main(int argc, char * argv[]) {
     lu[i] = (double *)malloc((sqrt_lN+2) * sizeof(double));
     lunew[i] = (double *)malloc((sqrt_lN+2) * sizeof(double));
   }
+  // initialize the boundary to be zero
+  for (int j = 0; j < sqrt_lN+2; j++)
+  {
+      lu[0][j] = 0;
+      lu[sqrt_lN+1][j] = 0;
+      lu[j][0] = 0;
+      lu[j][sqrt_lN+1] = 0;
+      lunew[0][j] = 0;
+      lunew[sqrt_lN+1][j] = 0;
+      lunew[j][0] = 0;
+      lunew[j][sqrt_lN+1] = 0;
+  }
 
   double h = 1.0 / (N + 1);
   double hsq = h * h;
@@ -122,13 +134,6 @@ int main(int argc, char * argv[]) {
   printf("1 \n");
   for (iter = 0; iter < max_iters && gres/gres0 > tol; iter++) {
     printf("iter at %d, mod 10 = %d\n", iter, iter%10);
-    /* Jacobi step for local points */
-    for (i = 1; i <= sqrt_lN; i++){
-      for (j = 1; j <= sqrt_lN; j++){
-        // Jacobi update, which only depend on values in the previous iteration, here we are choosing f(x,y)==1
-        lunew[i][j] = 0.25 * (hsq + lu[i-1][j] + lu[i][j-1] + lu[i+1][j] + lu[i][j+1]);
-      }
-    }
 
     if (mpirank > sqrt_p - 1) {
       /* if not bottom row processes, send/recv bdry values to the bottom*/
@@ -178,6 +183,15 @@ int main(int argc, char * argv[]) {
           lunew[i][sqrt_lN+1] = rcol_0[i];
       }
     }
+    
+    /* Jacobi step for local points */
+    for (i = 1; i <= sqrt_lN; i++){
+      for (j = 1; j <= sqrt_lN; j++){
+        // Jacobi update, which only depend on values in the previous iteration, here we are choosing f(x,y)==1
+        lunew[i][j] = 0.25 * (hsq + lu[i-1][j] + lu[i][j-1] + lu[i+1][j] + lu[i][j+1]);
+      }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     /* copy new u to u using pointer flipping */
     lutemp = lu; lu = lunew; lunew = lutemp;
