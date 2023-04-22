@@ -194,13 +194,13 @@ int main(int argc, char * argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     /* copy new u to u using pointer flipping */
-    lutemp = lu; lu = lunew; lunew = lutemp;
-    if (0 == (iter % 10)) {
-      gres = compute_residual(lu, sqrt_lN, invhsq);
-      if (0 == mpirank) {
-	      printf("Iter %d: Residual: %g\n", iter, gres);
-      }
-    }
+    // lutemp = lu; lu = lunew; lunew = lutemp;
+    // if (0 == (iter % 10)) {
+    //   gres = compute_residual(lu, sqrt_lN, invhsq);
+    //   if (0 == mpirank) {
+	  //     printf("Iter %d: Residual: %g\n", iter, gres);
+    //   }
+    // }
   }
   printf("end! \n");
 
