@@ -128,7 +128,7 @@ int main(int argc, char * argv[]) {
 
   for (iter = 0; iter < max_iters && gres/gres0 > tol; iter++) {
 
-  #pragma omp parallel for default(none) shared(lN,sqrt_lN,lunew,lu,hsq)
+  #pragma omp parallel for default(none) private(i,j) shared(lN,sqrt_lN,lunew,lu,hsq)
     /* Jacobi step for local points */
     for (i = 1; i <= sqrt_lN; i++){
       for (j = 1; j <= sqrt_lN; j++){
