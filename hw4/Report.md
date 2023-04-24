@@ -39,4 +39,33 @@ The Result index 0 and 1 received by proc 0 is 6 and 6
 ints ring bandwidth: 5.283442e-01 GB/s
 ```
 
+# Q3 2D-Jacobi
 
+Running the code with 4 processes from 0 to 4, on a 16 x 16 2D grid with max_iter 100, with initial data:
+
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0
+        ...
+0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0
+0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0
+0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+```batch
+mpiexec ./jacobi2D-mpi 16 100
+```
+
+Outcome:
+
+Iter 0: Residual: 3003.35
+Iter 10: Residual: 221.622
+Iter 20: Residual: 143.149
+Iter 30: Residual: 109.397
+Iter 40: Residual: 86.9342
+Iter 50: Residual: 69.3281
+Iter 60: Residual: 55.0114
+Iter 70: Residual: 43.3118
+Iter 80: Residual: 33.7805
+Iter 90: Residual: 26.074
+Time elapsed is 0.003367 seconds.
+end! The Residue is 26.07 at iteration 100
