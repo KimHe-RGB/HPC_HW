@@ -91,41 +91,38 @@ int main(int argc, char * argv[]) {
   // initialize the value that is not on the bdry
   for (i=i_first; i<=i_last; i++) { 
     for (j = 1; j < N-1; j++) {
-      lu[i][j] = 3;
+      lu[i][j] = 1;
     }
   }
   // initialize bdry value
   if (mpirank == 0) { // bdry at bottom row
     for (j=0; j<N; j++) {
-      lu[i_first][j] = 0;
+      lu[i_first][j] = 0;       lunew[i_first][j] = 0;
     }
   }
   if (mpirank == p-1) { // bdry at top row
     for (j=0; j<N; j++) {
-      lu[i_last][j] = 0;
+      lu[i_last][j] = 0;        lunew[i_last][j] = 0;
     }
   }
   // bdry at two ends
   for (j=i_first; i<=i_last; i++) { 
     lu[i][0] = 0;
     lu[i][N-1] = 0;
+    lunew[i][0] = 0;
+    lunew[i][N-1] = 0;
   }
   // initialize ghost values
   for (j=0; j < N; j++) {
     lu[i_first-1][j] = 0; // ghost at bottom row
     lu[i_last+1][j] = 0;  // ghost at top row
+    lunew[i_first-1][j] = 0; // ghost at bottom row
+    lunew[i_last+1][j] = 0;  // ghost at top row
   }
   /* timing */
   MPI_Barrier(MPI_COMM_WORLD);
   double tt = MPI_Wtime();
-  printf("proc %d, lu:\n", mpirank);
-  for (i=0; i < size+2; i++) {
-    for (j=0; j < N; j++){
-      printf("%.1f ", lu[i][j]);
-    }
-    printf("\n"); 
-  }
-  MPI_Barrier(MPI_COMM_WORLD);
+
   double h = 1.0 / (N + 1);
   double hsq = h * h;
   double invhsq = 1./hsq;
@@ -151,14 +148,14 @@ int main(int argc, char * argv[]) {
     if (mpirank < p - 1) 
         MPI_Recv( lu[size+1], N, MPI_DOUBLE, mpirank + 1, 1, MPI_COMM_WORLD, &status );
     
-    /* copy new u to u using pointer flipping */
-    lutemp = lu; lu = lunew; lunew = lutemp;
-    
     /* compute new values */
     for (i=i_first; i<=i_last; i++) 
       for (j=1; j<N-1; j++)
         lunew[i][j] = (lu[i][j+1] + lu[i][j-1] + lu[i+1][j] + lu[i-1][j]) * 0.25;
 
+    /* copy new u to u using pointer flipping */
+    lutemp = lu; lu = lunew; lunew = lutemp;
+    
     if (0 == (iter % 10)) {
       gres = compute_residual(lu, i_first, i_last, N-1, invhsq);
       if (0 == mpirank) {
