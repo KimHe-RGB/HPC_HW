@@ -15,7 +15,7 @@ double compute_residual(double **lu, int Ni_first, int Ni_last, int Nj, double i
   int i, j;
   double tmp, gres = 0.0, lres = 0.0;
   for (i = Ni_first; i <= Ni_last; i++){
-    for (j = 1; j <= Nj; j++)
+    for (j = 1; j < Nj; j++)
     {
       tmp = ((4.0*lu[i][j] - lu[i-1][j] - lu[i+1][j] - lu[i][j-1] - lu[i][j+1]) * invhsq - 1);
       lres += tmp * tmp;
@@ -24,15 +24,9 @@ double compute_residual(double **lu, int Ni_first, int Ni_last, int Nj, double i
   /* use allreduce for convenience; a reduce would also be sufficient */
   MPI_Allreduce(&lres, &gres, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-  printf("fin computing gres=%.2f; lres=%.2f\n", gres, lres);
   return sqrt(gres);
 }
 
-bool isPowerOfFour(int n) {
-    if(n <= 0) return false;
-    if((n & (n-1)) != 0) return false; // check if the integer is a power of 2
-    return (n & 0x55555555) != 0; // check if the integer has a set bit in an odd position
-}
 
 int sqrt(int x) {
     if(x == 0 || x == 1) return x;
@@ -60,6 +54,7 @@ int main(int argc, char * argv[]) {
     abort();
   }
   int mpirank, i, j, p, N, iter, max_iters;
+  int i_first, i_last;
   MPI_Status status, status1;
 
   MPI_Init(&argc, &argv);
@@ -75,72 +70,102 @@ int main(int argc, char * argv[]) {
   sscanf(argv[1], "%d", &N);                                             // N: discretization number of each dimension
   sscanf(argv[2], "%d", &max_iters);                                     // max_iters: number of jacobian iterations that we want to perform
 
-  if ((!isPowerOfFour(p) || !isPowerOfFour(N*N))) {
-    printf("Exiting. Both p and NxN must be power of 4\n");
-    MPI_Abort(MPI_COMM_WORLD, 0);
-  }
   if ((N * N % p != 0)) {
     printf("Exiting. NxN must be a multiple of p;\n");
     MPI_Abort(MPI_COMM_WORLD, 0);
   }
   /* compute number of unknowns handled by each process */
-  int i_first = 1;
-  int i_last  = N/p; 
-  int size = i_last; // number of unknowns by each process
-  if (mpirank == 0)        i_first++;
-  if (mpirank == p - 1)    i_last--;
-
-  /* timing */
-  MPI_Barrier(MPI_COMM_WORLD);
-  double tt = MPI_Wtime();
+  i_first = 1;
+  i_last  = N/p; 
+  int size = N/p; // number of unknowns by each process
 
   /* Allocation of vectors, including left/upper and right/lower ghost points */
-  /* (size+2) x (N) */
   double ** lu    = (double **)malloc((size+2) * sizeof(double *));
   double ** lunew = (double **)malloc((size+2) * sizeof(double *));
+  /* (size+2) x (N) */
   double ** lutemp;
-  for (int i = 0; i < size+2; i++) {
+  for (i = 0; i < size+2; i++) {
     lu[i] = (double *)malloc((N) * sizeof(double));
     lunew[i] = (double *)malloc((N) * sizeof(double));
   }
-  // initialize the value
-  for (i=1; i <= N/size; i++) 
-    for (j=0; j < N; j++) 
-        lu[i][j] = 1;
-  // initialize boundary to be zero
-  for (j = 0; j < N; j++)
-  {
-      lu[i_first-1][j] = 0;
-      lu[i_last+1][j] = 0;
-      lunew[i_first-1][j] = 0;
-      lunew[i_last+1][j] = 0;
+  // initialize the value that is not on the bdry
+  for (i=i_first; i<=i_last; i++) { 
+    for (j = 1; j < N-1; j++) {
+      lu[i][j] = 3;
+    }
   }
-
+  // initialize bdry value
+  if (mpirank == 0) { // bdry at bottom row
+    for (j=0; j<N; j++) {
+      lu[i_first][j] = 0;
+    }
+  }
+  if (mpirank == p-1) { // bdry at top row
+    for (j=0; j<N; j++) {
+      lu[i_last][j] = 0;
+    }
+  }
+  // bdry at two ends
+  for (j=i_first; i<=i_last; i++) { 
+    lu[i][0] = 0;
+    lu[i][N-1] = 0;
+  }
+  // initialize ghost values
+  for (j=0; j < N; j++) {
+    lu[i_first-1][j] = 0; // ghost at bottom row
+    lu[i_last+1][j] = 0;  // ghost at top row
+  }
+  /* timing */
+  MPI_Barrier(MPI_COMM_WORLD);
+  double tt = MPI_Wtime();
+  printf("proc %d, lu:\n", mpirank);
+  for (i=0; i < size+2; i++) {
+    for (j=0; j < N; j++){
+      printf("%.1f ", lu[i][j]);
+    }
+    printf("\n"); 
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
   double h = 1.0 / (N + 1);
   double hsq = h * h;
   double invhsq = 1./hsq;
   double gres, gres0, tol = 1e-5;
 
   /* initial residual */
-  printf("0 %d\n", mpirank);
-  gres0 = compute_residual(lu, i_first, i_last, N, invhsq);
+  gres0 = compute_residual(lu, i_first, i_last, N-1, invhsq);
   gres = gres0;
+  printf("proc %d, starting with residue %.2f\n", mpirank, gres);
 
   for (iter = 0; iter < max_iters && gres/gres0 > tol; iter++) {
-    for (i=i_first; i<=i_last; i++) 
-      for (j=1; j<N-1; j++) {
-        lunew[i][j] = (lu[i][j+1] + lu[i][j-1] + lu[i+1][j] + lu[i-1][j]) * 0.25;
-	  }
+    /* communicate */
+    /* Send up unless the top proc */
+    if (mpirank < p - 1) 
+        MPI_Send( lu[size], N, MPI_DOUBLE, mpirank + 1, 0, MPI_COMM_WORLD );
+    /* Recv down unless the bottom proc */
+    if (mpirank > 0)
+        MPI_Recv( lu[0], N, MPI_DOUBLE, mpirank - 1, 0, MPI_COMM_WORLD, &status );
+    /* Send down unless the bottom proc */
+    if (mpirank > 0) 
+        MPI_Send( lu[1], N, MPI_DOUBLE, mpirank - 1, 1, MPI_COMM_WORLD );
+    /* Recv up unless the top proc */
+    if (mpirank < p - 1) 
+        MPI_Recv( lu[size+1], N, MPI_DOUBLE, mpirank + 1, 1, MPI_COMM_WORLD, &status );
+    
     /* copy new u to u using pointer flipping */
     lutemp = lu; lu = lunew; lunew = lutemp;
+    
+    /* compute new values */
+    for (i=i_first; i<=i_last; i++) 
+      for (j=1; j<N-1; j++)
+        lunew[i][j] = (lu[i][j+1] + lu[i][j-1] + lu[i+1][j] + lu[i-1][j]) * 0.25;
+
     if (0 == (iter % 10)) {
-      gres = compute_residual(lu, i_first, i_last, N, invhsq);
+      gres = compute_residual(lu, i_first, i_last, N-1, invhsq);
       if (0 == mpirank) {
 	      printf("Iter %d: Residual: %g\n", iter, gres);
       }
     }
   }
-  printf("end! \n");
 
   /* Clean up */
   free(lu);
@@ -151,6 +176,7 @@ int main(int argc, char * argv[]) {
   double elapsed = MPI_Wtime() - tt;
   if (0 == mpirank) {
     printf("Time elapsed is %f seconds.\n", elapsed);
+    printf("end! The Residue is %.2f at iteration %d\n", gres, iter);
   }
   MPI_Finalize();
   return 0;

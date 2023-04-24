@@ -14,4 +14,4 @@ module load intel/19.1.2 openmpi/intel/4.0.5
 
 make
 
-mpiexec ./jacobi2D-mpi 16 50
+mpiexec ./jacobi2D-mpi 16 100

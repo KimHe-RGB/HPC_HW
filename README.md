@@ -4,6 +4,22 @@ Github repository:
 
 <https://github.com/KimHe-RGB/HPC_HW.git>
 
+## HPC-HW4
+
+To run on NYU Greene, simply cd into the corresponding question and submit the sbatch file:
+
+```bash
+sbatch job.sbatch
+```
+
+which compile the c++ code with loaded modules, and run it with fixed parameters.
+
+To change parameters, you will need to edit the instructions in `jobs.sbatch`.
+
+Written reports for all three questions are combined in:
+
+<https://github.com/KimHe-RGB/HPC_HW/blob/main/hw4/Report.md>
+
 ## HPC-HW3
 
 To run:
